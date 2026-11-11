@@ -10,3 +10,9 @@ install:
       Start-FileDownload "https://damassets.autodesk.net/content/dam/autodesk/www/adn/fbx/2020-2-1/fbx202021_fbxsdk_vs2019_win.exe" "fbxsdk.exe"
       Start-Process -FilePath "fbxsdk.exe" -ArgumentList "/S" -Wait
       cd ..
+
+artifacts:
+  - path: AssetStudioGUI\bin\Release\**\*.zip
+    name: AssetStudioGUI
+  - path: AssetStudioCLI\bin\Release\**\*.zip
+    name: AssetStudioCLI
