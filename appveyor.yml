@@ -11,12 +11,8 @@ install:
       Start-Process -FilePath "fbxsdk.exe" -ArgumentList "/S" -Wait
       cd ..
 
-build_script:
-  - dotnet publish AssetStudioCLI\AssetStudioCLI.csproj -c Release -o AssetStudioCLI\bin\Release\net10.0\publish
-  - dotnet publish AssetStudioGUI\AssetStudioGUI.csproj -c Release -o AssetStudioGUI\bin\Release\net10.0-windows\win-x64\publish
-
 artifacts:
-  - path: AssetStudioCLI\bin\Release\net10.0\publish
+  - path: AssetStudioCLI\bin\Release\**\*
     name: AssetStudioCLI
-  - path: AssetStudioGUI\bin\Release\net10.0-windows\win-x64\publish
+  - path: AssetStudioGUI\bin\Release\**\*
     name: AssetStudioGUI
