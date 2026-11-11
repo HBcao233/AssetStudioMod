@@ -321,10 +321,15 @@ namespace CubismLive2DExtractor
             var savePathHash = new ConcurrentDictionary<string, bool>();
             Parallel.ForEach(Texture2Ds, new ParallelOptions { MaxDegreeOfParallelism = parallelTaskCount }, texture2D =>
             {
-                var savePath = $"{destTexturePath}{texture2D.m_Name}.png";
+                var baseName = SanitizeTextureFileName(texture2D.m_Name);
+                var fileName = baseName;
+                var savePath = Path.Combine(destTexturePath, fileName + ".png");
+
                 if (!savePathHash.TryAdd(savePath, true))
                 {
-                    savePath = $"{destTexturePath}{texture2D.m_Name}_#{texture2D.GetHashCode()}.png";
+                    fileName = $"{baseName}_#{texture2D.GetHashCode()}";
+                    savePath = Path.Combine(destTexturePath, fileName + ".png");
+
                     if (!savePathHash.TryAdd(savePath, true))
                         return;
                 }
@@ -338,7 +343,8 @@ namespace CubismLive2DExtractor
                             image.WriteToStream(file, ImageFormat.Png);
                         }
                     }
-                    textureBag.Add($"textures/{texture2D.m_Name}.png");
+
+                    textureBag.Add($"textures/{fileName}.png");
                 }
             });
             textures.UnionWith(textureBag);
@@ -471,7 +477,7 @@ namespace CubismLive2DExtractor
                 var expressionDict = ParseMonoBehaviour(monoBehaviour, CubismMonoBehaviourType.Expression, Assembly);
                 if (expressionDict == null)
                     continue;
-                
+
                 var expression = JsonSerializer.Deserialize<CubismExpression3Json>(JsonSerializer.SerializeToUtf8Bytes(expressionDict, CubismJsonOptions), CubismJsonOptions);
 
                 expressions.Add(new JsonObject
@@ -552,7 +558,7 @@ namespace CubismLive2DExtractor
                 Name = "LipSync",
                 Ids = LipSyncParameters.ToArray()
             });
-            
+
             var model3 = new CubismModel3Json
             {
                 Version = 3,
@@ -782,6 +788,25 @@ namespace CubismLive2DExtractor
                 m_PathID = (long)pptrDict["m_PathID"],
                 AssetsFile = assetsFile
             };
+        }
+
+        private static string SanitizeTextureFileName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                name = "texture";
+
+            var invalid = new HashSet<char>(Path.GetInvalidFileNameChars());
+            foreach (var c in new[] { '|', ':', '*', '?', '"', '<', '>', '\\', '/' })
+                invalid.Add(c);
+
+            var sb = new StringBuilder(name.Length);
+            foreach (var c in name)
+            {
+                sb.Append(c < 32 || invalid.Contains(c) ? '_' : c);
+            }
+
+            var result = sb.ToString().Trim().TrimEnd('.', ' ');
+            return string.IsNullOrEmpty(result) ? "texture" : result;
         }
     }
 }
