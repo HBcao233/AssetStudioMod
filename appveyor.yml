@@ -1,18 +1,43 @@
 image: Visual Studio 2026
 
-before_build:
-  - dotnet restore AssetStudio.sln
-
 install:
   - ps: |
       md fbx
       cd fbx
       Start-FileDownload "https://damassets.autodesk.net/content/dam/autodesk/www/adn/fbx/2020-2-1/fbx202021_fbxsdk_vs2019_win.exe" "fbxsdk.exe"
-      Start-Process -FilePath "fbxsdk.exe" -ArgumentList "/S" -Wait
+      Start-Process -FilePath "fbxsdk.exe" /S -Wait
+      Start-FileDownload "https://damassets.autodesk.net/content/dam/autodesk/www/adn/fbx/2020-2-1/fbx202021_fbxsdk_vs2019_pdbs.exe" "fbxpdb.exe"
+      Start-Process -FilePath "fbxpdb.exe" /S -Wait
       cd ..
 
+before_build:
+  - nuget restore
+
+build_script:
+  - msbuild "C:\projects\assetstudiomod\AssetStudio.sln" /p:Configuration=Release /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild "C:\projects\assetstudiomod\AssetStudio.sln" /t:AssetStudioGUI:publish /p:Configuration=Release;TargetFramework=net9.0-windows;SelfContained=false /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild "C:\projects\assetstudiomod\AssetStudio.sln" /t:AssetStudioGUI:publish /p:Configuration=Release;TargetFramework=net10.0-windows;SelfContained=false /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild "C:\projects\assetstudiomod\AssetStudio.sln" /t:AssetStudioCLI:publish /p:Configuration=Release;TargetFramework=net9.0;SelfContained=false /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild "C:\projects\assetstudiomod\AssetStudio.sln" /t:AssetStudioCLI:publish /p:Configuration=Release;TargetFramework=net10.0;SelfContained=false /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild "C:\projects\assetstudiomod\AssetStudio.sln" /t:restore /t:AssetStudioCLI:publish /p:Configuration=Release;TargetFramework=net9.0;SelfContained=false;RuntimeIdentifier=win-x64 /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild "C:\projects\assetstudiomod\AssetStudio.sln" /t:restore /t:AssetStudioCLI:publish /p:Configuration=Release;TargetFramework=net9.0;SelfContained=false;RuntimeIdentifier=linux-x64 /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild "C:\projects\assetstudiomod\AssetStudio.sln" /t:restore /t:AssetStudioGUI:publish /p:Configuration=Release;TargetFramework=net9.0-windows;SelfContained=false;RuntimeIdentifier=win-x64 /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild "C:\projects\assetstudiomod\AssetStudio.sln" /t:restore /t:AssetStudioGUI:publish /p:Configuration=Release;TargetFramework=net10.0-windows;SelfContained=false;RuntimeIdentifier=win-x64 /verbosity:minimal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+
 artifacts:
-  - path: AssetStudioCLI\bin\Release\**\*
-    name: AssetStudioCLI
-  - path: AssetStudioGUI\bin\Release\**\*
-    name: AssetStudioGUI
+  - path: AssetStudioCLI\bin\Release\net10.0\publish
+    name: AssetStudioCLI.net10-Portable
+  - path: AssetStudioCLI\bin\Release\net472
+    name: AssetStudioCLI.net472
+  - path: AssetStudioCLI\bin\Release\net9.0\linux-x64\publish
+    name: AssetStudioCLI.net9-linux64
+  - path: AssetStudioCLI\bin\Release\net9.0\publish
+    name: AssetStudioCLI.net9-Portable
+  - path: AssetStudioCLI\bin\Release\net9.0\win-x64\publish
+    name: AssetStudioCLI.net9-win64
+  - path: AssetStudioGUI\bin\Release\net10.0-windows\win-x64\publish
+    name: AssetStudioGUI-net10-win64
+  - path: AssetStudioGUI\bin\Release\net472
+    name: AssetStudioGUI.net472
+  - path: AssetStudioGUI\bin\Release\net9.0-windows\win-x64\publish
+    name: AssetStudioGUI.net9-win64
